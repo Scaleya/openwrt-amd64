@@ -18,8 +18,17 @@ jobs:
       - name: Check and release
         run: |
             rm -fr *
+            # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md
+            # clean up to get enough disk
+            docker rmi `docker images -q`
+            sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d
+            sudo apt -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* mysql* php* android*
             sudo apt update
             sudo apt -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget curl swig rsync
+            sudo apt -y autoremove --purge
+            sudo apt clean
+            df -h
+            
             git clone https://github.com/coolsnowwolf/lede > /dev/null;cd lede
             sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
             ./scripts/feeds update -a;./scripts/feeds install -a
@@ -1025,7 +1034,8 @@ jobs:
             CONFIG_PACKAGE_shellsync=y
             CONFIG_STRACE_NONE=y
             EOF
-
+            
+            make defconfig
             make 
 
 
@@ -1033,8 +1043,8 @@ jobs:
 
             cd bin/targets/x86/64
             7z a img.7z openwrt-x86-64-generic-squashfs-combined-efi.img
-            cp img.7z /lede
-            cd
+            mv img.7z /lede
+            cd /lede
             shopt -s extglob
             rm -vrf !("img.7z")
             git init
