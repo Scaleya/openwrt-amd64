@@ -15,7 +15,7 @@ jobs:
         with:
           fetch-depth: 1
                 
-      - name: Check and release
+      - name: Clean up
         run: |
             rm -fr *
             # https://github.com/actions/virtual-environments/blob/main/images/linux/Ubuntu2004-README.md
@@ -28,7 +28,9 @@ jobs:
             sudo apt -y autoremove --purge
             sudo apt clean
             df -h
-            
+        
+      - name: Git clone and set custom config
+        run: |
             git clone https://github.com/coolsnowwolf/lede > /dev/null;cd lede
             sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
             ./scripts/feeds update -a;./scripts/feeds install -a
@@ -1034,10 +1036,18 @@ jobs:
             CONFIG_PACKAGE_shellsync=y
             CONFIG_STRACE_NONE=y
             EOF
-            
+      
+      - name: make download
+        run: |
+            make download -j 3
             make defconfig
+
+      - name: compile
+        run: |
             make -j 3
-            
+
+      - name: upload img
+        run: |   
             7z a img.7z bin/targets/x86/64/openwrt-x86-64-generic-squashfs-combined-efi.img
             mv img.7z ..
             cd ..
